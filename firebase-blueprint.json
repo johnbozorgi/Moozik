@@ -1,0 +1,227 @@
+{
+  "entities": {
+    "Room": {
+      "title": "Room",
+      "description": "A music room session",
+      "type": "object",
+      "properties": {
+        "hostId": { "type": "string" },
+        "roomCode": { "type": "string" },
+        "name": { "type": "string" },
+        "vibe": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "ended"] },
+        "currentTrackId": { "type": "string" },
+        "isPlaying": { "type": "boolean" },
+        "isAudioOnly": { "type": "boolean" },
+        "requiresApproval": { "type": "boolean" },
+        "bannedUids": { "type": "array", "items": { "type": "string" } },
+        "progress": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["hostId", "roomCode", "name", "status"]
+    },
+    "Track": {
+      "title": "Track",
+      "description": "A song in the queue",
+      "type": "object",
+      "properties": {
+        "youtubeId": { "type": "string" },
+        "title": { "type": "string" },
+        "thumbnail": { "type": "string" },
+        "addedBy": { "type": "string" },
+        "addedByUid": { "type": "string" },
+        "isWildcard": { "type": "boolean" },
+        "sortOrder": { "type": "number" },
+        "status": { "type": "string", "enum": ["queued", "playing", "played"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["youtubeId", "title", "addedBy", "sortOrder", "status"]
+    },
+    "Playlist": {
+      "title": "Playlist",
+      "description": "A user's personal playlist",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "isPublic": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Public user profile",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "username": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "rating": { "type": "number" },
+        "ratingCount": { "type": "number" },
+        "songsAddedCount": { "type": "number" },
+        "roomsJoinedCount": { "type": "number" },
+        "followersCount": { "type": "number" },
+        "followingCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "displayName", "username"]
+    },
+    "Follow": {
+      "title": "Follow",
+      "description": "A follow relationship between users",
+      "type": "object",
+      "properties": {
+        "followerUid": { "type": "string" },
+        "followedUid": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["followerUid", "followedUid"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "A user notification",
+      "type": "object",
+      "properties": {
+        "toUid": { "type": "string" },
+        "fromUid": { "type": "string" },
+        "fromName": { "type": "string" },
+        "type": { "type": "string", "enum": ["follow", "new_room", "new_music", "new_playlist"] },
+        "message": { "type": "string" },
+        "link": { "type": "string" },
+        "isRead": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["toUid", "type", "message", "isRead"]
+    },
+    "UserSettings": {
+      "title": "UserSettings",
+      "description": "User notification preferences",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "notifyOnFollow": { "type": "boolean" },
+        "notifyOnNewRoom": { "type": "boolean" },
+        "notifyOnNewMusic": { "type": "boolean" },
+        "notifyOnNewPlaylist": { "type": "boolean" }
+      },
+      "required": ["uid"]
+    },
+    "Rating": {
+      "title": "Rating",
+      "description": "A user rating",
+      "type": "object",
+      "properties": {
+        "fromUid": { "type": "string" },
+        "toUid": { "type": "string" },
+        "score": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["fromUid", "toUid", "score"]
+    },
+    "PlaylistItem": {
+      "title": "PlaylistItem",
+      "description": "A song in a personal playlist",
+      "type": "object",
+      "properties": {
+        "youtubeId": { "type": "string" },
+        "title": { "type": "string" },
+        "thumbnail": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["youtubeId", "title"]
+    },
+    "RoomJoinRequest": {
+      "title": "RoomJoinRequest",
+      "description": "A request to join a private room",
+      "type": "object",
+      "properties": {
+        "roomId": { "type": "string" },
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["roomId", "uid", "status"]
+    },
+    "RoomMember": {
+      "title": "RoomMember",
+      "description": "A user currently in a room",
+      "type": "object",
+      "properties": {
+        "roomId": { "type": "string" },
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "isMuted": { "type": "boolean" },
+        "joinedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["roomId", "uid"]
+    },
+    "Recommendation": {
+      "title": "Recommendation",
+      "description": "A song recommendation from a user",
+      "type": "object",
+      "properties": {
+        "youtubeId": { "type": "string" },
+        "title": { "type": "string" },
+        "thumbnail": { "type": "string" },
+        "uid": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["youtubeId", "title", "uid"]
+    }
+  },
+  "firestore": {
+    "/rooms/{roomId}": {
+      "schema": "Room",
+      "description": "Active and past rooms"
+    },
+    "/rooms/{roomId}/queue/{trackId}": {
+      "schema": "Track",
+      "description": "The song queue for a room"
+    },
+    "/rooms/{roomId}/requests/{requestId}": {
+      "schema": "RoomJoinRequest",
+      "description": "Join requests for a room"
+    },
+    "/rooms/{roomId}/members/{memberId}": {
+      "schema": "RoomMember",
+      "description": "Active members in a room"
+    },
+    "/recommendations/{recommendationId}": {
+      "schema": "Recommendation",
+      "description": "Global song recommendations"
+    },
+    "/playlists/{playlistId}": {
+      "schema": "Playlist",
+      "description": "User personal playlists"
+    },
+    "/playlists/{playlistId}/items/{itemId}": {
+      "schema": "PlaylistItem",
+      "description": "Tracks within a personal playlist"
+    },
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Public user profiles"
+    },
+    "/ratings/{ratingId}": {
+      "schema": "Rating",
+      "description": "User to user ratings"
+    },
+    "/follows/{followId}": {
+      "schema": "Follow",
+      "description": "User follow relationships"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "Notification",
+      "description": "User notifications"
+    },
+    "/userSettings/{userId}": {
+      "schema": "UserSettings",
+      "description": "User notification settings"
+    }
+  }
+}

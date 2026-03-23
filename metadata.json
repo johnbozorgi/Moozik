@@ -1,0 +1,5 @@
+{
+  "name": "Ridio",
+  "description": "A digital AUX cable for parties. One host plays, everyone adds to the queue via YouTube.",
+  "requestFramePermissions": ["microphone"]
+}
