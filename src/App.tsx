@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Music, Plus, Search, Users, Play, Pause, SkipForward, Share2, LogIn, Crown, Trash2, ExternalLink, Settings, ChevronLeft, Star, Bell, UserPlus, UserMinus, Check, X, Upload, Home, TrendingUp, Shield, Ban, MicOff, Mic, MoreVertical } from 'lucide-react';
 import { auth, db } from './firebase';
@@ -514,6 +514,7 @@ export default function App() {
   const [pendingJoinRequest, setPendingJoinRequest] = useState<RoomJoinRequest | null>(null);
   const [isBanned, setIsBanned] = useState(false);
   const [adsCode, setAdsCode] = useState('');
+  const roomSubsRef = useRef<(() => void)[]>([]);
 
   useEffect(() => {
     // Fetch Ads Code
@@ -715,9 +716,10 @@ export default function App() {
 
   useEffect(() => {
     if (view === 'discovery') {
-      onSnapshot(query(collection(db, 'users'), limit(20)), (s) => {
+      const unsubscribe = onSnapshot(query(collection(db, 'users'), limit(20)), (s) => {
         setDiscoveryUsers(s.docs.map(d => ({ uid: d.id, ...d.data() } as UserProfile)));
       });
+      return () => unsubscribe();
     }
   }, [view]);
 
@@ -935,13 +937,17 @@ export default function App() {
   };
 
   const enterRoom = async (roomData: Room) => {
+    // Clean up any existing room subscriptions
+    roomSubsRef.current.forEach(unsub => unsub());
+    roomSubsRef.current = [];
+
     setCurrentRoom(roomData);
     if (roomData.hostId === user.uid) {
       setView('host');
     } else {
       setView('guest');
     }
-    
+
     await setDoc(doc(db, 'rooms', roomData.id, 'members', user.uid), {
       roomId: roomData.id,
       uid: user.uid,
@@ -951,13 +957,20 @@ export default function App() {
       joinedAt: serverTimestamp()
     });
 
-    onSnapshot(query(collection(db, 'rooms', roomData.id, 'queue'), orderBy('sortOrder', 'asc')), (qs) => {
+    // Increment roomsJoinedCount for guests (hosts already increment in createRoom)
+    if (roomData.hostId !== user.uid) {
+      await updateDoc(doc(db, 'users', user.uid), { roomsJoinedCount: increment(1) });
+    }
+
+    const unsubQueue = onSnapshot(query(collection(db, 'rooms', roomData.id, 'queue'), orderBy('sortOrder', 'asc')), (qs) => {
       setQueue(qs.docs.map(d => ({ id: d.id, ...d.data() } as Track)));
     });
 
-    onSnapshot(collection(db, 'rooms', roomData.id, 'members'), (s) => {
+    const unsubMembers = onSnapshot(collection(db, 'rooms', roomData.id, 'members'), (s) => {
       setRoomMembers(s.docs.map(d => ({ id: d.id, ...d.data() } as RoomMember)));
     });
+
+    roomSubsRef.current = [unsubQueue, unsubMembers];
   };
 
   if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-zinc-500">Loading...</div>;
@@ -1049,51 +1062,20 @@ export default function App() {
             <h1 className="text-lg font-semibold capitalize">{view === 'host' || view === 'guest' ? 'Room' : view.replace('_', ' ')}</h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3">
             {user && (
               <>
-                <div className="relative">
-                  <Button variant="ghost" className="p-2 relative" onClick={() => setShowNotifications(!showNotifications)}>
-                    <Bell className="w-5 h-5" />
-                    {notifications.filter(n => !n.isRead).length > 0 && (
-                      <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-emerald-500 rounded-full border-2 border-black" />
-                    )}
-                  </Button>
-                  
-                  <AnimatePresence>
-                    {showNotifications && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className="absolute right-0 mt-2 w-80 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl p-4 z-50 overflow-hidden"
-                      >
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="font-bold">Notifications</h3>
-                          <Button variant="ghost" className="text-xs p-1 h-auto" onClick={async () => {
-                            for (const n of notifications.filter(n => !n.isRead)) {
-                              await updateDoc(doc(db, 'notifications', n.id), { isRead: true });
-                            }
-                          }}>Mark all read</Button>
-                        </div>
-                        <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
-                          {notifications.length === 0 ? (
-                            <p className="text-center text-zinc-500 py-8 text-sm">No notifications yet</p>
-                          ) : (
-                            notifications.map(n => (
-                              <div key={n.id} className={cn("p-3 rounded-xl transition-all", n.isRead ? "bg-zinc-800/20" : "bg-emerald-500/5 border border-emerald-500/20")}>
-                                <p className="text-sm text-zinc-200">{n.message}</p>
-                                <p className="text-[10px] text-zinc-500 mt-1">{n.createdAt?.toDate().toLocaleDateString()}</p>
-                              </div>
-                            ))
-                          )}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+                <Button variant="ghost" className="p-2 relative" onClick={() => setShowNotifications(!showNotifications)}>
+                  <Bell className="w-5 h-5" />
+                  {notifications.filter(n => !n.isRead).length > 0 && (
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-emerald-500 rounded-full border-2 border-black" />
+                  )}
+                </Button>
 
-                <Button variant="secondary" onClick={() => signOut(auth)}>Sign Out</Button>
+                <Button variant="secondary" className="hidden sm:flex" onClick={() => signOut(auth)}>Sign Out</Button>
+                <Button variant="ghost" className="sm:hidden p-2" onClick={() => signOut(auth)} title="Sign Out">
+                  <LogIn className="w-5 h-5 rotate-180" />
+                </Button>
               </>
             )}
             {!user && <Button onClick={() => signInWithPopup(auth, new GoogleAuthProvider())}>Sign In</Button>}
@@ -1302,7 +1284,7 @@ export default function App() {
                   <div className="p-6 bg-zinc-900 border border-zinc-800 rounded-3xl space-y-6">
                     <div className="flex flex-col items-center gap-4">
                       <div className="relative group">
-                        <img src={profile?.photoURL} alt="" className="w-32 h-32 rounded-full border-4 border-zinc-800 object-cover group-hover:opacity-50 transition-opacity" referrerPolicy="no-referrer" />
+                        <img src={profile?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.uid}`} alt="" className="w-32 h-32 rounded-full border-4 border-zinc-800 object-cover group-hover:opacity-50 transition-opacity" referrerPolicy="no-referrer" />
                         <label className="absolute inset-0 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
                           <Upload className="w-8 h-8 text-white" />
                           <input type="file" className="hidden" accept="image/*" onChange={handlePhotoUpload} />
@@ -1722,6 +1704,25 @@ export default function App() {
       </AnimatePresence>
         </div>
       </div>
+
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            className={cn(
+              "fixed bottom-24 md:bottom-8 left-1/2 -translate-x-1/2 z-[500] px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-3 text-sm font-medium border max-w-[calc(100vw-2rem)] text-center",
+              toast.type === 'success' && "bg-emerald-900/80 border-emerald-500/30 text-emerald-300 backdrop-blur-xl",
+              toast.type === 'error' && "bg-red-900/80 border-red-500/30 text-red-300 backdrop-blur-xl",
+              toast.type === 'info' && "bg-zinc-800/90 border-zinc-700 text-zinc-200 backdrop-blur-xl",
+            )}
+          >
+            {toast.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -1745,6 +1746,7 @@ function HostView({ user, roomCode, onExit, setSelectedProfile, showToast }: {
   const [members, setMembers] = useState<RoomMember[]>([]);
   const [requests, setRequests] = useState<RoomJoinRequest[]>([]);
   const [showShareModal, setShowShareModal] = useState(true);
+  const [showPlaylistMenu, setShowPlaylistMenu] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -2083,22 +2085,28 @@ function HostView({ user, roomCode, onExit, setSelectedProfile, showToast }: {
                       <p className="text-zinc-500 text-sm">Added by {currentTrack.addedBy}</p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                      <div className="relative group/playlist">
-                        <Button variant="ghost" className="p-3 rounded-full text-zinc-500 hover:text-emerald-500">
+                      <div className="relative">
+                        <Button variant="ghost" className="p-3 rounded-full text-zinc-500 hover:text-emerald-500" onClick={() => setShowPlaylistMenu(v => !v)}>
                           <Plus className="w-5 h-5" />
                         </Button>
-                        <div className="absolute bottom-full right-0 mb-2 w-48 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl opacity-0 invisible group-hover/playlist:opacity-100 group-hover/playlist:visible transition-all p-2 z-50">
-                          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest p-2">Add to Playlist</p>
-                          {playlists.map(p => (
-                            <button 
-                              key={p.id} 
-                              onClick={() => addToPlaylist(p.id, currentTrack)}
-                              className="w-full text-left px-3 py-2 text-xs hover:bg-zinc-800 rounded-lg transition-colors"
-                            >
-                              {p.name}
-                            </button>
-                          ))}
-                        </div>
+                        {showPlaylistMenu && (
+                          <>
+                            <div className="fixed inset-0 z-40" onClick={() => setShowPlaylistMenu(false)} />
+                            <div className="absolute bottom-full right-0 mb-2 w-48 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl p-2 z-50">
+                              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest p-2">Add to Playlist</p>
+                              {playlists.length === 0 && <p className="text-[10px] text-zinc-600 px-3 py-2">No playlists yet</p>}
+                              {playlists.map(p => (
+                                <button
+                                  key={p.id}
+                                  onClick={() => { addToPlaylist(p.id, currentTrack); setShowPlaylistMenu(false); }}
+                                  className="w-full text-left px-3 py-2 text-xs hover:bg-zinc-800 rounded-lg transition-colors"
+                                >
+                                  {p.name}
+                                </button>
+                              ))}
+                            </div>
+                          </>
+                        )}
                       </div>
                       <Button variant="secondary" className="p-3 rounded-full" onClick={toggleAudioOnly}>
                         <ExternalLink className={cn("w-5 h-5", !room?.isAudioOnly && "text-emerald-500")} />
@@ -2155,7 +2163,7 @@ function HostView({ user, roomCode, onExit, setSelectedProfile, showToast }: {
                         <p className="text-[10px] text-zinc-500">by {track.addedBy}</p>
                       </div>
                       {track.isWildcard && <Crown className="w-3 h-3 text-amber-500" />}
-                      <Button variant="ghost" className="p-2 opacity-0 group-hover:opacity-100" onClick={() => deleteDoc(doc(db, 'rooms', room!.id, 'queue', track.id))}>
+                      <Button variant="ghost" className="p-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity" onClick={() => deleteDoc(doc(db, 'rooms', room!.id, 'queue', track.id))}>
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </motion.div>
@@ -2189,7 +2197,7 @@ function HostView({ user, roomCode, onExit, setSelectedProfile, showToast }: {
                   </p>
                 </div>
                 {member.uid !== room?.hostId && (
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                     <Button 
                       variant="ghost" 
                       className={cn("p-2", member.isMuted ? "text-red-500" : "text-zinc-500")}
@@ -2222,17 +2230,17 @@ function HostView({ user, roomCode, onExit, setSelectedProfile, showToast }: {
               </div>
             ) : (
               requests.filter(r => r.status === 'pending').map(request => (
-                <div key={request.id} className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 flex items-center justify-between">
+                <div key={request.id} className="bg-zinc-900 border border-zinc-800 rounded-3xl p-4 md:p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div className="flex items-center gap-4">
-                    <img src={request.photoURL} alt="" className="w-14 h-14 rounded-2xl object-cover" referrerPolicy="no-referrer" />
+                    <img src={request.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${request.uid}`} alt="" className="w-14 h-14 rounded-2xl object-cover" referrerPolicy="no-referrer" />
                     <div>
                       <p className="text-lg font-bold">{request.displayName}</p>
                       <p className="text-sm text-zinc-500">Wants to join the vibe</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Button variant="secondary" onClick={() => handleRequest(request.id, 'rejected')}>Reject</Button>
-                    <Button onClick={() => handleRequest(request.id, 'approved')}>Approve</Button>
+                    <Button variant="secondary" className="flex-1 sm:flex-none" onClick={() => handleRequest(request.id, 'rejected')}>Reject</Button>
+                    <Button className="flex-1 sm:flex-none" onClick={() => handleRequest(request.id, 'approved')}>Approve</Button>
                   </div>
                 </div>
               ))
@@ -2261,6 +2269,7 @@ function GuestView({ user, room, queue, onExit, setSelectedProfile, sendNotifica
   const [searching, setSearching] = useState(false);
   const [hasUsedWildcard, setHasUsedWildcard] = useState(false);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [openPlaylistMenu, setOpenPlaylistMenu] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -2369,22 +2378,28 @@ function GuestView({ user, room, queue, onExit, setSelectedProfile, sendNotifica
             <h3 className="font-bold line-clamp-1 text-sm">{currentTrack.title}</h3>
             <p className="text-zinc-500 text-[10px]">Host is playing this on their device</p>
           </div>
-          <div className="relative group/playlist">
-            <Button variant="ghost" className="p-2 rounded-full text-zinc-500 hover:text-emerald-500">
+          <div className="relative">
+            <Button variant="ghost" className="p-2 rounded-full text-zinc-500 hover:text-emerald-500" onClick={() => setOpenPlaylistMenu(v => v === 'current' ? null : 'current')}>
               <Plus className="w-4 h-4" />
             </Button>
-            <div className="absolute bottom-full right-0 mb-2 w-40 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl opacity-0 invisible group-hover/playlist:opacity-100 group-hover/playlist:visible transition-all p-2 z-50">
-              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest p-2">Save to...</p>
-              {playlists.map(p => (
-                <button 
-                  key={p.id} 
-                  onClick={() => addToPlaylist(p.id, currentTrack)}
-                  className="w-full text-left px-3 py-2 text-[10px] hover:bg-zinc-800 rounded-lg transition-colors"
-                >
-                  {p.name}
-                </button>
-              ))}
-            </div>
+            {openPlaylistMenu === 'current' && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setOpenPlaylistMenu(null)} />
+                <div className="absolute bottom-full right-0 mb-2 w-40 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl p-2 z-50">
+                  <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest p-2">Save to...</p>
+                  {playlists.length === 0 && <p className="text-[10px] text-zinc-600 px-3 py-2">No playlists yet</p>}
+                  {playlists.map(p => (
+                    <button
+                      key={p.id}
+                      onClick={() => { addToPlaylist(p.id, currentTrack); setOpenPlaylistMenu(null); }}
+                      className="w-full text-left px-3 py-2 text-[10px] hover:bg-zinc-800 rounded-lg transition-colors"
+                    >
+                      {p.name}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -2419,22 +2434,28 @@ function GuestView({ user, room, queue, onExit, setSelectedProfile, sendNotifica
                 <Button variant="secondary" className="p-2" onClick={() => addToQueue(video)}>
                   <Plus className="w-4 h-4" />
                 </Button>
-                <div className="relative group/playlist">
-                  <Button variant="ghost" className="p-2 text-zinc-500 hover:text-emerald-500">
+                <div className="relative">
+                  <Button variant="ghost" className="p-2 text-zinc-500 hover:text-emerald-500" onClick={() => setOpenPlaylistMenu(v => v === video.id ? null : video.id)}>
                     <LogIn className="w-4 h-4 rotate-90" />
                   </Button>
-                  <div className="absolute bottom-full right-0 mb-2 w-40 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl opacity-0 invisible group-hover/playlist:opacity-100 group-hover/playlist:visible transition-all p-2 z-50">
-                    <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest p-2">Save to...</p>
-                    {playlists.map(p => (
-                      <button 
-                        key={p.id} 
-                        onClick={() => addToPlaylist(p.id, video)}
-                        className="w-full text-left px-3 py-2 text-[10px] hover:bg-zinc-800 rounded-lg transition-colors"
-                      >
-                        {p.name}
-                      </button>
-                    ))}
-                  </div>
+                  {openPlaylistMenu === video.id && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setOpenPlaylistMenu(null)} />
+                      <div className="absolute bottom-full right-0 mb-2 w-40 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl p-2 z-50">
+                        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest p-2">Save to...</p>
+                        {playlists.length === 0 && <p className="text-[10px] text-zinc-600 px-3 py-2">No playlists yet</p>}
+                        {playlists.map(p => (
+                          <button
+                            key={p.id}
+                            onClick={() => { addToPlaylist(p.id, video); setOpenPlaylistMenu(null); }}
+                            className="w-full text-left px-3 py-2 text-[10px] hover:bg-zinc-800 rounded-lg transition-colors"
+                          >
+                            {p.name}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </motion.div>
