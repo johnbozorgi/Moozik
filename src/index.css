@@ -14,4 +14,7 @@
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: #3f3f46;
   }
+  .pb-safe {
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 0.75rem);
+  }
 }
