@@ -1,0 +1,46 @@
+name: moozik_host
+description: Moozik Host App - DJ room host with background audio
+
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Firebase
+  firebase_core: ^2.27.0
+  firebase_auth: ^4.17.0
+  firebase_database: ^10.4.0
+
+  # Background audio
+  just_audio: ^0.9.36
+  just_audio_background: ^0.0.1-beta.11
+  audio_service: ^0.18.12
+
+  # YouTube
+  youtube_explode_dart: ^2.0.0
+
+  # HTTP
+  http: ^1.2.0
+
+  # Utilities
+  shared_preferences: ^2.2.2
+  google_sign_in: ^6.2.1
+  uuid: ^4.3.3
+
+  # UI
+  cached_network_image: ^3.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/
