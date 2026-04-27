@@ -21,7 +21,10 @@ export class RoomQueueService {
       durationSec: payload.durationSec,
       addedByUserId: user.id,
       addedByDisplayName: user.displayName,
+      addedByAvatarUrl: undefined,
       score: 0,
+      upvotes: 0,
+      downvotes: 0,
       createdAtMs: Date.now(),
     };
 
@@ -71,7 +74,10 @@ export class RoomQueueService {
       durationSec: item.durationSec ? String(item.durationSec) : '',
       addedByUserId: item.addedByUserId,
       addedByDisplayName: item.addedByDisplayName,
+      addedByAvatarUrl: item.addedByAvatarUrl ?? '',
       score: String(item.score),
+      upvotes: String(item.upvotes),
+      downvotes: String(item.downvotes),
       createdAtMs: String(item.createdAtMs),
     };
   }
@@ -87,7 +93,10 @@ export class RoomQueueService {
       durationSec: raw.durationSec ? Number(raw.durationSec) : undefined,
       addedByUserId: this.required(raw, 'addedByUserId'),
       addedByDisplayName: this.required(raw, 'addedByDisplayName'),
+      addedByAvatarUrl: raw.addedByAvatarUrl || undefined,
       score: Number(raw.score ?? 0),
+      upvotes: Number(raw.upvotes ?? 0),
+      downvotes: Number(raw.downvotes ?? 0),
       createdAtMs: Number(raw.createdAtMs),
     };
   }

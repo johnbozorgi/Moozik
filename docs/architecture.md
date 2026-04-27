@@ -18,6 +18,21 @@ RoomBeat is a synchronized social watching platform built around Music Rooms. Th
 
 The host controls playback, but the server is the synchronization authority. Host clients send playback observations. The server stamps each state with server time, sequence number, and room version before broadcasting to joiners. Joiners estimate clock offset and round-trip latency to calculate the target playback second.
 
+## Experience System
+
+RoomBeat's interface uses a kinetic dark mode rather than a flat black canvas. The active YouTube thumbnail becomes the room's adaptive theme source: extracted colors drive player glow, buttons, reaction trails, and visualizer accents. The UI should feel responsive to music without becoming visually noisy.
+
+Core experience pillars:
+
+- Dynamic glassmorphism for room panels, host controls, queues, lyrics, and profile cards.
+- Micro-interactions on every social action: queue adds, votes, reactions, joins, and host moderation.
+- Live sound reactions that broadcast visual effects to everyone while allowing each user to toggle local sound playback.
+- Synchronized lyrics with host-approved jump suggestions.
+- Social queue metadata that shows requester identity, avatars, votes, and skip pressure.
+- Gamified profiles with Music Taste DNA, DJ level, milestone badges, and unlockable room themes.
+
+Future extensions are designed as modules rather than core blockers: DJ audio shoutouts, weather and activity-aware room suggestions, song battles, live quizzes, after-party highlights, generated shared playlists, and smart-light integrations.
+
 ## Deployment Shape
 
 The default local and early production topology is:
