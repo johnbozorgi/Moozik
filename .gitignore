@@ -12,3 +12,6 @@ coverage
 *.tsbuildinfo
 Dockerfile.local
 .DS_Store
+.vercel
+
+.vercel

@@ -11,6 +11,11 @@
     "typecheck": "corepack pnpm -r --if-present typecheck",
     "format": "prettier --write ."
   },
+  "dependencies": {
+    "next": "^15.1.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
   "devDependencies": {
     "@roombeat/config": "workspace:*",
     "prettier": "^3.4.2",
