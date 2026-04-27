@@ -1,0 +1,21 @@
+{
+  "name": "@roombeat/database",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "scripts": {
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.1.0"
+  },
+  "devDependencies": {
+    "@roombeat/config": "workspace:*",
+    "@types/node": "^22.10.2",
+    "prisma": "^6.1.0",
+    "typescript": "^5.7.2"
+  }
+}

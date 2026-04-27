@@ -1,0 +1,10 @@
+{
+  "extends": "@roombeat/config/tsconfig/react",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "include": ["app", "src"]
+}

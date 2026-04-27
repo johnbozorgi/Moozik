@@ -1,0 +1,113 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoomVisibility {
+  PUBLIC
+  UNLISTED
+  PRIVATE
+}
+
+enum RoomMemberRole {
+  HOST
+  COHOST
+  JOINER
+}
+
+model User {
+  id              String          @id @default(cuid())
+  email           String          @unique
+  displayName     String
+  avatarUrl       String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  hostedRooms     Room[]          @relation("RoomHost")
+  roomMemberships RoomMember[]
+  badges          UserBadge[]
+  playlists       SavedPlaylist[]
+}
+
+model Room {
+  id             String          @id @default(cuid())
+  slug           String          @unique
+  title          String
+  description    String?
+  visibility     RoomVisibility  @default(PUBLIC)
+  hostId         String
+  host           User            @relation("RoomHost", fields: [hostId], references: [id])
+  currentVideoId String?
+  thumbnailUrl   String?
+  startedAt      DateTime        @default(now())
+  endedAt        DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  members        RoomMember[]
+  sessions       RoomSession[]
+}
+
+model RoomSession {
+  id           String    @id @default(cuid())
+  roomId       String
+  room         Room      @relation(fields: [roomId], references: [id])
+  startedAt    DateTime  @default(now())
+  endedAt      DateTime?
+  peakAudience Int       @default(0)
+}
+
+model RoomMember {
+  id        String         @id @default(cuid())
+  roomId    String
+  room      Room           @relation(fields: [roomId], references: [id])
+  userId    String
+  user      User           @relation(fields: [userId], references: [id])
+  role      RoomMemberRole @default(JOINER)
+  joinedAt  DateTime       @default(now())
+  leftAt    DateTime?
+
+  @@unique([roomId, userId])
+}
+
+model Badge {
+  id          String      @id @default(cuid())
+  code        String      @unique
+  name        String
+  description String
+  users       UserBadge[]
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  badgeId   String
+  badge     Badge    @relation(fields: [badgeId], references: [id])
+  awardedAt DateTime @default(now())
+
+  @@unique([userId, badgeId])
+}
+
+model SavedPlaylist {
+  id        String              @id @default(cuid())
+  userId    String
+  user      User                @relation(fields: [userId], references: [id])
+  name      String
+  createdAt DateTime            @default(now())
+  items     SavedPlaylistItem[]
+}
+
+model SavedPlaylistItem {
+  id              String        @id @default(cuid())
+  playlistId      String
+  playlist        SavedPlaylist @relation(fields: [playlistId], references: [id])
+  youtubeVideoId  String
+  title           String
+  channelTitle    String
+  thumbnailUrl    String
+  durationSec     Int?
+  addedAt         DateTime      @default(now())
+}

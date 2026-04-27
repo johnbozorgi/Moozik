@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "RoomBeat",
+    "slug": "roombeat",
+    "scheme": "roombeat",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark"
+  }
+}
