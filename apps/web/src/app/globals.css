@@ -1,7 +1,14 @@
 :root {
   color-scheme: dark;
-  background: #07070a;
-  color: #fafafa;
+  background: #0f0f0f;
+  color: #ffffff;
+  --rb-bg: #0f0f0f;
+  --rb-panel: rgba(255, 255, 255, 0.08);
+  --rb-border: rgba(255, 255, 255, 0.14);
+  --rb-muted: #a7a7a7;
+  --rb-green: #39ff88;
+  --rb-purple: #9b5cff;
+  --rb-radius: 16px;
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
@@ -13,9 +20,130 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: #07070a;
+  background: var(--rb-bg);
 }
 
 a {
   color: inherit;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.app-chrome {
+  min-height: 100vh;
+  padding-bottom: 92px;
+}
+
+.bottom-tabs {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  left: 18px;
+  z-index: 40;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 8px;
+  border: 1px solid var(--rb-border);
+  border-radius: 20px;
+  background: rgba(10, 10, 12, 0.72);
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(28px);
+}
+
+.bottom-tabs a {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  border-radius: 14px;
+  color: var(--rb-muted);
+  font-size: 0.86rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.bottom-tabs a:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.mini-player {
+  position: fixed;
+  right: 18px;
+  bottom: 88px;
+  z-index: 39;
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  width: min(420px, calc(100vw - 36px));
+  padding: 10px;
+  border: 1px solid var(--rb-border);
+  border-radius: 18px;
+  background: rgba(18, 18, 22, 0.78);
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(28px);
+}
+
+.mini-player img {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.mini-player strong,
+.mini-player span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mini-player span {
+  color: var(--rb-muted);
+  font-size: 0.78rem;
+}
+
+.mini-player button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--rb-green);
+  color: #051008;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--rb-radius);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.skeleton::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+  animation: skeletonSweep 1.3s ease-in-out infinite;
+}
+
+@keyframes skeletonSweep {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(100%);
+  }
 }

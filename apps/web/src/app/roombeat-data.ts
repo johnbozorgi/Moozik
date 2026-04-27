@@ -26,6 +26,16 @@ export type QueueTrack = {
   duration: string;
 };
 
+export type Artist = {
+  slug: string;
+  name: string;
+  imageUrl: string;
+  monthlyRooms: number;
+  topTracks: string[];
+  activeRooms: RoomCard[];
+  accent: Accent;
+};
+
 export const moods = ['Driving', 'Gym', 'Study', 'Party', 'Chilling'];
 
 export const featuredChannels: RoomCard[] = [
@@ -117,6 +127,73 @@ export const friendActivity = [
   { name: 'Sara', room: 'Deep Focus', avatar: 'S', pulse: 'hosting' },
 ];
 
+export const searchSuggestions = [
+  'Persian hip-hop',
+  'Deep focus lofi',
+  'Texas country road trip',
+  'Gym bass boost',
+  'Global top 50',
+  'Relaxing acoustic covers',
+];
+
+export const chartGroups = [
+  { label: 'Global', rooms: [featuredChannels[0], trendingRooms[1], trendingRooms[0]] },
+  { label: 'Local Texas', rooms: [trendingRooms[0], trendingRooms[2], trendingRooms[3]] },
+  { label: 'Regional / Persian', rooms: [featuredChannels[2], featuredChannels[1], trendingRooms[0]] },
+];
+
+export const libraryFavorites = [
+  { title: 'Night city synth run', artist: 'Mina', savedAt: 'Today' },
+  { title: 'Lo-fi midnight study set', artist: 'RoomBeat Studio', savedAt: 'Yesterday' },
+  { title: 'New wave street cuts', artist: 'Tehran Frequency', savedAt: 'Friday' },
+];
+
+export const customPlaylists = [
+  { name: 'Driving After Dark', tracks: 38, source: 'YouTube links' },
+  { name: 'Gym Heat Rotation', tracks: 24, source: 'Room saves' },
+  { name: 'Persian Weekend', tracks: 51, source: 'Imported playlist' },
+];
+
+export const superHosts = [
+  { name: 'Mina', specialty: 'Late-night drives', followers: '18.4k' },
+  { name: 'Sahar', specialty: 'Focus rooms', followers: '12.7k' },
+  { name: 'Arman', specialty: 'Workout sessions', followers: '22.1k' },
+];
+
+function requiredRoom(room: RoomCard | undefined): RoomCard {
+  if (!room) {
+    throw new Error('RoomBeat seed data is missing a required room.');
+  }
+
+  return room;
+}
+
+const persianRoom = requiredRoom(featuredChannels[2]);
+const focusRoom = requiredRoom(featuredChannels[1]);
+const driveRoom = requiredRoom(trendingRooms[0]);
+const codeRoom = requiredRoom(trendingRooms[3]);
+
+export const artists: Artist[] = [
+  {
+    slug: 'tehran-frequency',
+    name: 'Tehran Frequency',
+    imageUrl: persianRoom.thumbnailUrl,
+    monthlyRooms: 284,
+    topTracks: ['Streetlight Cipher', 'North Side Bass', 'Azadi Afterglow'],
+    activeRooms: [persianRoom, driveRoom],
+    accent: persianRoom.accent,
+  },
+  {
+    slug: 'roombeat-studio',
+    name: 'RoomBeat Studio',
+    imageUrl: focusRoom.thumbnailUrl,
+    monthlyRooms: 612,
+    topTracks: ['Midnight Desk', 'Rain Tab Loop', 'Velvet Focus'],
+    activeRooms: [focusRoom, codeRoom],
+    accent: focusRoom.accent,
+  },
+];
+
 export const queueTracks: QueueTrack[] = [
   {
     title: 'Purple sky interlude',
@@ -170,4 +247,14 @@ export function getRoomBySlug(slug: string): RoomCard {
         .join(' '),
     }
   );
+}
+
+export function getArtistBySlug(slug: string): Artist {
+  const fallbackArtist = artists[0];
+
+  if (!fallbackArtist) {
+    throw new Error('RoomBeat requires at least one artist seed.');
+  }
+
+  return artists.find((artist) => artist.slug === slug) ?? fallbackArtist;
 }

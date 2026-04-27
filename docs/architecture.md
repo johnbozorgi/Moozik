@@ -33,6 +33,22 @@ Core experience pillars:
 
 Future extensions are designed as modules rather than core blockers: DJ audio shoutouts, weather and activity-aware room suggestions, song battles, live quizzes, after-party highlights, generated shared playlists, and smart-light integrations.
 
+## Music Platform Layer
+
+RoomBeat should behave like a library and discovery guide, not just a player. The primary navigation model is Home, Search, Rooms, and Library. A user should be able to reach a live room, saved song, artist page, or queue action in three taps.
+
+Core music features:
+
+- YouTube-backed auto-complete search with filters for tracks and playlists.
+- Trending charts by Global, Local Texas, and Regional/Persian categories.
+- Mood-based playlist presets for Focus, Gym, Party, Driving, and Relaxation.
+- Artist pages with top tracks, active rooms, and room discovery.
+- Favorites, custom playlists, YouTube playlist imports, follows, and Super-Host subscriptions.
+- Persistent mini-player and Pro Player room layout.
+- Shuffle, repeat, quality selection, and future crossfade controls where supported by the YouTube player APIs.
+
+Security note: `YOUTUBE_API_KEY` must stay server-side. If a key is ever pasted into chat, logs, or frontend code, rotate it immediately and restrict the replacement key to approved domains and API scopes in Google Cloud Console.
+
 ## Deployment Shape
 
 The default local and early production topology is:

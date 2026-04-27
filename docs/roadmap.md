@@ -12,6 +12,8 @@
 - Basic chat and sound reactions.
 - Kinetic dark room shell with adaptive thumbnail theming hooks.
 - Social queue metadata, requester avatars, and democratic vote contracts.
+- Server-side YouTube search, metadata lookup, and playlist import endpoints.
+- Bottom navigation, mini-player, search, library, rooms, and artist page shells.
 
 ## Phase 2: UX and SEO, 2-3 weeks
 
